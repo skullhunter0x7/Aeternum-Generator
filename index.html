@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multi-Name API Generator</title>
+<title>Multi-Name & Fantasy Generator</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -14,30 +14,20 @@
     align-items: center;
     padding: 20px;
   }
-  h1 {
-    color: #4ce1ff;
-  }
-  select, input, button {
-    padding: 10px;
-    margin: 5px;
-    font-size: 16px;
-  }
-  #name-output {
-    margin-top: 20px;
-    font-size: 20px;
-    color: #ffb74d;
-    text-align: center;
-  }
+  h1 { color: #4ce1ff; }
+  select, input, button { padding: 10px; margin: 5px; font-size: 16px; }
+  #name-output { margin-top: 20px; font-size: 20px; color: #ffb74d; text-align: center; }
 </style>
 </head>
 <body>
 
-<h1>Multi-Name API Generator (US/Western)</h1>
+<h1>Multi-Name & Fantasy Generator</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
   <option value="real">Real Name</option>
   <option value="username">Username</option>
+  <option value="fantasy">Fantasy Male</option>
 </select>
 
 <label for="gender">Select Gender:</label>
@@ -55,6 +45,24 @@
 <div id="name-output">Names will appear here</div>
 
 <script>
+// ----- Fantasy male generator setup -----
+const fantasyPrefixes = ["Ar","Thal","Ka","Dor","Syl","El","Nim"];
+const fantasySuffixesMale = ["'R","'k","'s","'l","'n","Ron","ar","rik","vek","ald","rak","isk","lan'r"];
+const vowels = ["a","e","i","o","u","ae","io"];
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function generateFantasyMaleName(){
+  const prefix = pick(fantasyPrefixes);
+  const mid = Math.random() < 0.6 ? pick(vowels) : "";
+  const suffix = pick(fantasySuffixesMale);
+  let name = prefix + mid + suffix;
+  // remove forbidden letters C and Z
+  name = name.replace(/[cCzZ]/g,"");
+  return name;
+}
+
+// ----- Main generator function -----
 async function generateNames() {
   const category = document.getElementById("category").value;
   const gender = document.getElementById("gender").value;
@@ -63,7 +71,7 @@ async function generateNames() {
 
   try {
     if(category === "real") {
-      // Nationality set to Western countries
+      // Western real names
       let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us,gb,ca,au,nz`;
       if(gender !== "all") apiURL += `&gender=${gender}`;
       const res = await fetch(apiURL);
@@ -73,9 +81,13 @@ async function generateNames() {
       const res = await fetch(`https://usernameapiv1.vercel.app/api/random-usernames?count=${count}`);
       const data = await res.json();
       names = data.usernames;
+    } else if(category === "fantasy") {
+      for(let i=0;i<count;i++){
+        names.push(generateFantasyMaleName());
+      }
     }
   } catch(err) {
-    names = ["API error: " + err.message];
+    names = ["Error: " + err.message];
   }
 
   document.getElementById("name-output").innerHTML = names.join("<br>");
