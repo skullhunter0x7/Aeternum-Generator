@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>API Name Generator</title>
+<title>Multi-Name API Generator with Gender</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -17,22 +17,22 @@
   h1 {
     color: #4ce1ff;
   }
-  select, button {
+  select, input, button {
     padding: 10px;
     margin: 5px;
     font-size: 16px;
   }
   #name-output {
     margin-top: 20px;
-    font-size: 28px;
-    font-weight: bold;
+    font-size: 20px;
     color: #ffb74d;
+    text-align: center;
   }
 </style>
 </head>
 <body>
 
-<h1>API Name Generator</h1>
+<h1>Multi-Name API Generator</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
@@ -40,36 +40,47 @@
   <option value="username">Username</option>
 </select>
 
-<button id="generate-btn">Generate Name</button>
+<label for="gender">Select Gender:</label>
+<select id="gender">
+  <option value="all">All</option>
+  <option value="male">Male</option>
+  <option value="female">Female</option>
+</select>
 
-<div id="name-output">Your name will appear here</div>
+<label for="count">Number of names:</label>
+<input type="number" id="count" value="5" min="1" max="50">
+
+<button id="generate-btn">Generate Names</button>
+
+<div id="name-output">Names will appear here</div>
 
 <script>
-async function generateName() {
+async function generateNames() {
   const category = document.getElementById("category").value;
-  let name = "Error generating name";
+  const gender = document.getElementById("gender").value;
+  const count = parseInt(document.getElementById("count").value) || 1;
+  let names = [];
 
   try {
     if(category === "real") {
-      // RandomUser API
-      const res = await fetch('https://randomuser.me/api/?inc=name&nat=us');
+      let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us`;
+      if(gender !== "all") apiURL += `&gender=${gender}`;
+      const res = await fetch(apiURL);
       const data = await res.json();
-      const user = data.results[0].name;
-      name = `${user.first} ${user.last}`;
+      names = data.results.map(u => `${u.name.first} ${u.name.last}`);
     } else if(category === "username") {
-      // Random Username API
-      const res = await fetch('https://usernameapiv1.vercel.app/api/random-usernames?count=1');
+      const res = await fetch(`https://usernameapiv1.vercel.app/api/random-usernames?count=${count}`);
       const data = await res.json();
-      name = data.usernames[0];
+      names = data.usernames;
     }
   } catch(err) {
-    name = "API error: " + err.message;
+    names = ["API error: " + err.message];
   }
 
-  document.getElementById("name-output").innerText = name;
+  document.getElementById("name-output").innerHTML = names.join("<br>");
 }
 
-document.getElementById("generate-btn").addEventListener("click", generateName);
+document.getElementById("generate-btn").addEventListener("click", generateNames);
 </script>
 
 </body>
