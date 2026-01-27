@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.16</title>
+<title>NameForge v0.17</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -37,9 +37,8 @@
 </head>
 <body>
 
-<h1>NameForge v0.16</h1>
+<h1>NameForge v0.17</h1>
 
-<!-- FANTASY GENERATOR -->
 <div class="section">
   <label for="category">Select Type:</label>
   <select id="category">
@@ -61,30 +60,18 @@
   <div id="name-output"></div>
 </div>
 
-<!-- MANUAL BASE NAME + ENDINGS -->
 <div class="section">
   <h3>Add Endings to Existing Name</h3>
 
-  <input
-    type="text"
-    id="base-name"
-    placeholder="Base name (e.g. Dor, Thal, Nim)"
-  >
+  <input type="text" id="base-name" placeholder="Base name (e.g. Dor, Thal, Nim)">
 
   <div style="margin-top:10px;">
-    <label>
-      <input type="radio" name="ending-gender" value="male" checked>
-      Male endings
-    </label>
+    <label><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
     &nbsp;&nbsp;
-    <label>
-      <input type="radio" name="ending-gender" value="female">
-      Female endings
-    </label>
+    <label><input type="radio" name="ending-gender" value="female"> Female endings</label>
   </div>
 
   <button id="ending-btn">Generate Variants</button>
-
   <div id="ending-output"></div>
 </div>
 
@@ -95,7 +82,7 @@ const vowels = ["a","e","i","o","u"];
 const codas = ["l","n","r","m","k","s","d","v"];
 const maleSuffixes = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
 const femaleSuffixes = ["'ra","ral","raka","'ka","ara","'sa","sha","'la","lin","'na","ae","yn"];
-const rareFemaleSuffix = "'ia"; // attaches to another female suffix 1/100 chance
+const rareFemaleSuffixes = ["'ra'ia","'ka'ia","'sa'ia","'la'ia","'na'ia"]; // rare combos, 1%
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
@@ -107,23 +94,22 @@ function makeSyllable(allowCoda = true){
 
 // ---------- FANTASY NAME GENERATOR ----------
 function generateFantasyName(gender){
-  let syllableCount = Math.random() < 0.7 ? 1 : 2;
+  let syllableCount = Math.random()<0.7 ? 1 : 2;
   let base = "";
   for(let i=0;i<syllableCount;i++) base += makeSyllable(i===0);
 
-  // select suffix list
-  let activeSuffixes = gender === "female" ? [...femaleSuffixes] : [...maleSuffixes];
+  let activeSuffixes = gender==="female" ? [...femaleSuffixes] : [...maleSuffixes];
   let suffix = pick(activeSuffixes);
 
-  // Rare 'ia for female
-  if(gender === "female" && Math.random() < 0.01){
-    suffix += rareFemaleSuffix;
+  // 1% chance to use rare female suffix combos
+  if(gender==="female" && Math.random()<0.01){
+    suffix = pick(rareFemaleSuffixes);
   }
 
   // prevent letter collision
   const lastBaseChar = base.slice(-1);
-  const firstSuffixChar = suffix.replace("'", "").charAt(0);
-  if(lastBaseChar === firstSuffixChar) base = base.slice(0, -1);
+  const firstSuffixChar = suffix.replace(/'/g,"").charAt(0);
+  if(lastBaseChar === firstSuffixChar) base = base.slice(0,-1);
 
   let name = base + suffix;
   name = name.replace(/[cC]/g,"")
@@ -142,12 +128,12 @@ async function generateNames(){
   let names = [];
 
   try{
-    if(category === "real"){
+    if(category==="real"){
       let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us,gb,ca,au,nz`;
       if(gender!=="all") apiURL += `&gender=${gender}`;
       const res = await fetch(apiURL);
       const data = await res.json();
-      names = data.results.map(u => `${u.name.first} ${u.name.last}`);
+      names = data.results.map(u=>`${u.name.first} ${u.name.last}`);
     } else {
       for(let i=0;i<count;i++) names.push(generateFantasyName(gender));
     }
@@ -169,20 +155,20 @@ function generateEndings(){
   let base = input.replace(/[cC]/g,"").toLowerCase();
 
   let activeSuffixes = gender==="female" ? [...femaleSuffixes] : [...maleSuffixes];
-  const results = [];
+  let results = [];
+
+  // add rare female suffixes with 1% chance
+  if(gender==="female" && Math.random()<0.01){
+    activeSuffixes = activeSuffixes.concat(rareFemaleSuffixes);
+  }
 
   activeSuffixes.forEach(suffix=>{
     let b = base;
     const last = b.slice(-1);
-    const first = suffix.replace("'", "").charAt(0);
+    const first = suffix.replace(/'/g,"").charAt(0);
     if(last===first) b = b.slice(0,-1);
 
     let name = (b+suffix).replace(/el'l/g,"el");
-
-    if(gender==="female" && Math.random()<0.01){
-      name += rareFemaleSuffix;
-    }
-
     results.push(name.charAt(0).toUpperCase()+name.slice(1));
   });
 
