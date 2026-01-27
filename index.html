@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.13</title>
+<title>NameForge v0.12</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -30,7 +30,20 @@
 </head>
 <body>
 
-<h1>NameForge v0.13 — Nordic</h1>
+<h1>NameForge v0.12</h1>
+
+<label for="category">Select Type:</label>
+<select id="category">
+  <option value="real">Real Name</option>
+  <option value="fantasy">Fantasy Male</option>
+</select>
+
+<label for="gender">Select Gender:</label>
+<select id="gender">
+  <option value="all">All</option>
+  <option value="male">Male</option>
+  <option value="female">Female</option>
+</select>
 
 <label for="count">Number of names:</label>
 <input type="number" id="count" value="5" min="1" max="50">
@@ -40,52 +53,54 @@
 <div id="name-output">Names will appear here</div>
 
 <script>
-// ------------------ Nordic name system ------------------
+// ---------- Fantasy rules (human flow) ----------
 
-// Human-friendly Nordic starts
-const onsets = [
-  "Al","Ar","Bal","Bor","Dar","Eir","Fen","Hal","Har",
-  "Ing","Jor","Kar","Ran","Sig","Tor","Ulf","Var"
-];
+// Simple, pronounceable syllables
+const onsets = ["d","t","k","n","m","l","r","s","th","v"];
+const vowels = ["a","e","i","o","u"];
+const codas = ["l","n","r","m","k","s","d","v"];
 
-// Simple, pronounceable vowel cores
-const cores = ["a","e","i","o","u","ar","or","an","ir"];
-
-// Allowed endings ONLY
-const endings = [
-  "'r","'k","'s","'l","'n",
-  "ron","ar","rik","vek","ald","rak","isk","lan'r"
-];
+// Allowed suffixes ONLY
+const suffixes = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function syllableCount(name) {
-  return (name.match(/[aeiouy]/gi) || []).length;
+function makeSyllable(allowCoda = true) {
+  let s = pick(onsets) + pick(vowels);
+  if (allowCoda && Math.random() < 0.5) {
+    s += pick(codas);
+  }
+  return s;
 }
 
-function generateNordicName() {
-  let start = pick(onsets);
-  let core = Math.random() < 0.7 ? pick(cores) : "";
-  let end = pick(endings);
+function generateFantasyMaleName() {
+  // 1–2 syllables max before suffix
+  let syllableCount = Math.random() < 0.7 ? 1 : 2;
+  let base = "";
 
-  let name = start + core + end;
-
-  // Hard rules
-  name = name.replace(/el'l/gi, ""); // absolute ban
-  name = name.replace(/c/gi, "");    // no C ever
-  name = name.replace(/z/gi, "");    // no Z for now
-
-  // Prevent ugly consonant piles
-  if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(name)) {
-    return generateNordicName();
+  for (let i = 0; i < syllableCount; i++) {
+    base += makeSyllable(i === 0);
   }
 
-  // Keep it human-length
-  if (syllableCount(name) > 3 || name.length > 10) {
-    return generateNordicName();
+  let suffix = pick(suffixes);
+
+  // Prevent same-letter collision before suffix
+  const lastBaseChar = base.slice(-1);
+  const firstSuffixChar = suffix.replace("'", "").charAt(0);
+  if (lastBaseChar === firstSuffixChar) {
+    base = base.slice(0, -1);
   }
+
+  let name = base + suffix;
+
+  // Final cleanup rules
+  name = name
+    .replace(/[cC]/g, "")     // no C
+    .replace(/([aeiou])\1/g, "$1") // no double vowels
+    .replace(/el'l/g, "el")   // hard ban
+    .toLowerCase();
 
   // Capitalize first letter only
   name = name.charAt(0).toUpperCase() + name.slice(1);
@@ -93,16 +108,34 @@ function generateNordicName() {
   return name;
 }
 
-function generateNames() {
+// ---------- Main generator ----------
+async function generateNames() {
+  const category = document.getElementById("category").value;
+  const gender = document.getElementById("gender").value;
   const count = parseInt(document.getElementById("count").value) || 1;
   let names = [];
-  for (let i = 0; i < count; i++) {
-    names.push(generateNordicName());
+
+  try {
+    if (category === "real") {
+      let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us,gb,ca,au,nz`;
+      if (gender !== "all") apiURL += `&gender=${gender}`;
+      const res = await fetch(apiURL);
+      const data = await res.json();
+      names = data.results.map(u => `${u.name.first} ${u.name.last}`);
+    } else {
+      for (let i = 0; i < count; i++) {
+        names.push(generateFantasyMaleName());
+      }
+    }
+  } catch (err) {
+    names = ["Error: " + err.message];
   }
+
   document.getElementById("name-output").innerHTML = names.join("<br>");
 }
 
-document.getElementById("generate-btn").addEventListener("click", generateNames);
+document.getElementById("generate-btn")
+  .addEventListener("click", generateNames);
 </script>
 
 </body>
