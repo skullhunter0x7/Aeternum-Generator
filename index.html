@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForgeV0.8</title>
+<title>NameForgeV0.9</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<h1>NameForgeV0.8</h1>
+<h1>NameForgeV0.9</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
@@ -44,50 +44,46 @@
 <div id="name-output">Names will appear here</div>
 
 <script>
-// ----- Fantasy male generator setup -----
-const fantasyPrefixes = ["Ar","Thal","Ka","Dor","Syl","El","Nim"];
-const fantasySuffixesMale = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
-const consonants = ["b","d","f","g","h","j","k","l","m","n","p","r","s","t","v"];
-const vowels = ["a","e","i","o","u"];
+// ----- Human-sounding fantasy male generator -----
+const syllables = ["ar","el","dor","thal","ka","nim","ron","rik","vek","ald","rak","isk","lan","sy"];
+const glottalSuffixes = ["'r","'k","'s","'l","'n"];
+const multiSuffixes = ["ron","ar","rik","vek","ald","rak","isk","lan"];
+const forbiddenLetters = /[cCzZ]/g;
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function generateFantasyMaleName(){
-  // Step 1: Pick prefix
-  let prefix = pick(fantasyPrefixes);
+  let name = pick(syllables).charAt(0).toUpperCase() + pick(syllables).slice(1);
+  let syllableCount = Math.random() < 0.7 ? 2 : 3; // 2-3 syllables
 
-  // Step 2: Decide middle syllable (1 consonant + vowel)
-  let mid = "";
-  if(Math.random() < 0.7){ // 70% chance to add a middle
-    const c = pick(consonants);
-    const v = pick(vowels);
-    mid = c + v;
-  }
+  for(let i=1; i<syllableCount; i++){
+    let next = pick(syllables);
 
-  // Step 3: Pick suffix
-  let suffixRaw = pick(fantasySuffixesMale);
-  let suffix = suffixRaw;
-
-  const singleLetterSuffixes = ["r","k","s","l","n"];
-  if(singleLetterSuffixes.includes(suffixRaw.replace("'","").toLowerCase())){
-    suffix = "'" + suffixRaw.replace("'","").toLowerCase(); // lowercase apostrophe
-  } else if(suffixRaw.length > 1){
-    suffix = suffixRaw.charAt(0).toLowerCase() + suffixRaw.slice(1); // lowercase first letter
-  }
-
-  // Step 4: Avoid awkward double letters before glottal stop
-  if(mid){
-    const lastChar = mid.slice(-1).toLowerCase();
-    const firstCharSuffix = suffix.replace("'","").charAt(0).toLowerCase();
-    if(lastChar === firstCharSuffix){
-      mid = mid.slice(0,-1) + pick(vowels); // replace last vowel
+    // Avoid repeating sounds
+    while(next.charAt(0).toLowerCase() === name.slice(-1).toLowerCase()){
+      next = pick(syllables);
     }
+
+    name += next;
   }
 
-  let name = prefix + mid + suffix;
+  // Decide on suffix type
+  let useGlottal = Math.random() < 0.5; // 50% chance
+  if(useGlottal){
+    let suffix = pick(glottalSuffixes);
+    // only attach glottal if previous letter is not vowel for natural pause
+    if(!"aeiou".includes(name.slice(-1).toLowerCase())){
+      name += suffix;
+    } else {
+      // fallback: pick multi-letter suffix
+      name += pick(multiSuffixes);
+    }
+  } else {
+    name += pick(multiSuffixes);
+  }
 
-  // Step 5: Remove forbidden letters
-  name = name.replace(/[cCzZ]/g,"");
+  // Remove forbidden letters
+  name = name.replace(forbiddenLetters,"");
 
   // Capitalize first letter
   name = name.charAt(0).toUpperCase() + name.slice(1);
