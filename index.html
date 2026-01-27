@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multi-Name v4</title>
+<title>NameForgeV4</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -21,12 +21,11 @@
 </head>
 <body>
 
-<h1>Multi-Name & Fantasy Generator</h1>
+<h1>NameForgeV4</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
   <option value="real">Real Name</option>
-  <option value="username">Username</option>
   <option value="fantasy">Fantasy Male</option>
 </select>
 
@@ -92,10 +91,6 @@ async function generateNames() {
       const res = await fetch(apiURL);
       const data = await res.json();
       names = data.results.map(u => `${u.name.first} ${u.name.last}`);
-    } else if(category === "username") {
-      const res = await fetch(`https://usernameapiv1.vercel.app/api/random-usernames?count=${count}`);
-      const data = await res.json();
-      names = data.usernames;
     } else if(category === "fantasy") {
       for(let i=0;i<count;i++){
         names.push(generateFantasyMaleName());
