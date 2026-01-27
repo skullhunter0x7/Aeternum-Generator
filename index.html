@@ -3,103 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.21</title>
+<title>NameForge v0.22</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-  }
+  body { font-family: Arial, sans-serif; background: #111; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
   h1 { color: #4ce1ff; }
-  select, input, button {
-    padding: 10px;
-    margin: 5px;
-    font-size: 16px;
-  }
-  .section {
-    border: 1px solid #333;
-    padding: 15px;
-    margin-top: 20px;
-    width: 100%;
-    max-width: 500px;
-    text-align: center;
-  }
-  #name-output, #ending-output {
-    margin-top: 15px;
-    font-size: 20px;
-    color: #ffb74d;
-  }
+  .section { border: 1px solid #333; padding: 15px; margin-top: 20px; width: 100%; max-width: 500px; text-align: center; }
+  input, select, button { padding: 8px; margin: 5px; font-size: 16px; }
+  #name-output, #ending-output { margin-top: 15px; font-size: 20px; color: #ffb74d; }
+  .inline { display: inline-block; margin:0 5px; }
 </style>
 </head>
 <body>
 
-<h1>NameForge v0.21</h1>
+<h1>NameForge v0.22</h1>
 
-<!-- ---------------- Terradine Section ---------------- -->
 <div class="section">
-  <label for="category">Select Type:</label>
   <select id="category">
     <option value="real">Real Name</option>
     <option value="terradine">Terradine</option>
   </select>
 
-  <label for="gender">Select Gender:</label>
   <select id="gender">
     <option value="male">Male</option>
     <option value="female">Female</option>
   </select>
 
-  <label for="count">Number of names:</label>
   <input type="number" id="count" value="5" min="1" max="50">
-
   <button id="generate-btn">Generate Names</button>
   <div id="name-output"></div>
 </div>
 
-<!-- ---------------- Manual Base + Suffix Section ---------------- -->
 <div class="section">
-  <h3>Add Endings to Existing Name</h3>
-  <input type="text" id="base-name" placeholder="Base name (e.g. Dor, Thal, Nim)">
-  <div style="margin-top:10px;">
-    <label><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
-    &nbsp;&nbsp;
-    <label><input type="radio" name="ending-gender" value="female"> Female endings</label>
+  <input type="text" id="base-name" placeholder="Base name">
+  <div>
+    <label class="inline"><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
+    <label class="inline"><input type="radio" name="ending-gender" value="female"> Female endings</label>
   </div>
   <button id="ending-btn">Generate Variants</button>
   <div id="ending-output"></div>
 </div>
 
-<!-- ---------------- Scripts ---------------- -->
-<script src="terradine.js"></script> <!-- Terradine logic -->
-<script src="realnames.js"></script> <!-- Real name logic -->
-
+<script src="terradine.js"></script>
+<script src="realnames.js"></script>
 <script>
 async function generateNames(){
   const category = document.getElementById("category").value;
   const gender = document.getElementById("gender").value;
   const count = parseInt(document.getElementById("count").value)||1;
-  let names = [];
-
-  try{
-    if(category==="real"){
-      names = await generateRealNames(count, gender);
-    } else if(category==="terradine"){
-      for(let i=0;i<count;i++) names.push(generateTerradineName(gender));
-    }
-  }catch(err){
-    names = ["Error: "+err.message];
-  }
-
+  const names = category==="real" ? await generateRealNames(count, gender) : Array.from({length:count},()=>generateTerradineName(gender));
   document.getElementById("name-output").innerHTML = names.join("<br>");
 }
-
 document.getElementById("generate-btn").addEventListener("click", generateNames);
 
-// Manual base + suffix
 document.getElementById("ending-btn").addEventListener("click", ()=>{
   const results = generateTerradineSuffixes(
     document.getElementById("base-name").value.trim(),
