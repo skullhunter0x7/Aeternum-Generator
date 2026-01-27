@@ -64,7 +64,7 @@ Hair Color: ${hair}`;
 function randomizeAll() {
   const name = randomItem(randomNames);
   const gender = randomItem(genders);
-  const age = Math.floor(Math.random() * 1000) + 1;
+  const age = Math.floor(Math.random() * 35) + 15;
   const planet = randomItem(planets);
   const hair = randomItem(hairColorsByPlanet[planet]);
 
