@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v25</title>
+<title>NameForge v0.25</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -25,11 +25,12 @@
     text-align: center;
   }
   #name-output, #ending-output { margin-top: 15px; font-size: 20px; color: #ffb74d; }
+  #manual-section { display: none; }
 </style>
 </head>
 <body>
 
-<h1>NameForge v25</h1>
+<h1>NameForge v0.25</h1>
 
 <!-- ---------------- Main Name Section ---------------- -->
 <div class="section">
@@ -51,28 +52,36 @@
 
   <button id="generate-btn">Generate Names</button>
   <div id="name-output"></div>
-</div>
 
-<!-- ---------------- Terradine Manual Section ---------------- -->
-<div class="section">
-  <h3>Terradine Manual</h3>
-  <input type="text" id="base-name" placeholder="Base name (e.g. Dor, Thal, Nim)">
-  <div style="margin-top:10px;">
-    <label><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
-    &nbsp;&nbsp;
-    <label><input type="radio" name="ending-gender" value="female"> Female endings</label>
+  <!-- ---------------- Terradine Manual Section ---------------- -->
+  <div id="manual-section" style="margin-top:20px;">
+    <h3>Terradine Manual</h3>
+    <input type="text" id="base-name" placeholder="Base name (e.g. Dor, Thal, Nim)">
+    <div style="margin-top:10px;">
+      <label><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
+      &nbsp;&nbsp;
+      <label><input type="radio" name="ending-gender" value="female"> Female endings</label>
+    </div>
+    <button id="ending-btn">Generate Variants</button>
+    <div id="ending-output"></div>
   </div>
-  <button id="ending-btn">Generate Variants</button>
-  <div id="ending-output"></div>
 </div>
 
 <script src="terradine.js"></script>
 <script src="aethere.js"></script>
 
 <script>
+// ---------- Show/hide manual section ----------
+const categorySelect = document.getElementById("category");
+const manualSection = document.getElementById("manual-section");
+
+categorySelect.addEventListener("change", () => {
+  manualSection.style.display = categorySelect.value === "terradine" ? "block" : "none";
+});
+
 // ---------- Main generator ----------
 async function generateNames() {
-  const category = document.getElementById("category").value;
+  const category = categorySelect.value;
   const gender = document.getElementById("gender").value;
   const count = parseInt(document.getElementById("count").value)||1;
   let names = [];
@@ -107,7 +116,6 @@ function generateEndings(){
   let base = input.replace(/[cC]/g,"").toLowerCase();
   let activeSuffixes = gender==="female"? [...femaleSuffixes] : [...maleSuffixes];
 
-  // add rare female combos 1%
   if(gender==="female" && Math.random()<0.01){
     activeSuffixes = activeSuffixes.concat(rareFemaleSuffixes);
   }
