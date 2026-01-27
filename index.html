@@ -3,24 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.22</title>
+<title>NameForge v0.23</title>
 <style>
   body { font-family: Arial, sans-serif; background: #111; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
   h1 { color: #4ce1ff; }
   .section { border: 1px solid #333; padding: 15px; margin-top: 20px; width: 100%; max-width: 500px; text-align: center; }
   input, select, button { padding: 8px; margin: 5px; font-size: 16px; }
-  #name-output, #ending-output { margin-top: 15px; font-size: 20px; color: #ffb74d; }
-  .inline { display: inline-block; margin:0 5px; }
+  #name-output { margin-top: 15px; font-size: 20px; color: #ffb74d; }
+  .inline { display: inline-block; margin: 0 5px; }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
 
-<h1>NameForge v0.22</h1>
+<h1>NameForge v0.23</h1>
 
 <div class="section">
   <select id="category">
     <option value="real">Real Name</option>
     <option value="terradine">Terradine</option>
+    <option value="custom">Custom Base + Suffix</option>
   </select>
 
   <select id="gender">
@@ -29,38 +31,54 @@
   </select>
 
   <input type="number" id="count" value="5" min="1" max="50">
-  <button id="generate-btn">Generate Names</button>
-  <div id="name-output"></div>
-</div>
 
-<div class="section">
-  <input type="text" id="base-name" placeholder="Base name">
-  <div>
+  <!-- Custom Base Input -->
+  <input type="text" id="base-name" placeholder="Base name" class="hidden">
+  <div id="base-options" class="hidden">
     <label class="inline"><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
     <label class="inline"><input type="radio" name="ending-gender" value="female"> Female endings</label>
   </div>
-  <button id="ending-btn">Generate Variants</button>
-  <div id="ending-output"></div>
+
+  <button id="generate-btn">Generate Names</button>
+  <div id="name-output"></div>
 </div>
 
 <script src="terradine.js"></script>
 <script src="realnames.js"></script>
 <script>
-async function generateNames(){
-  const category = document.getElementById("category").value;
+const categorySelect = document.getElementById("category");
+const baseInput = document.getElementById("base-name");
+const baseOptions = document.getElementById("base-options");
+const output = document.getElementById("name-output");
+
+// Show/hide base input for custom
+categorySelect.addEventListener("change", ()=>{
+  if(categorySelect.value === "custom"){
+    baseInput.classList.remove("hidden");
+    baseOptions.classList.remove("hidden");
+  } else {
+    baseInput.classList.add("hidden");
+    baseOptions.classList.add("hidden");
+  }
+});
+
+// Main generate function
+document.getElementById("generate-btn").addEventListener("click", async ()=>{
+  const category = categorySelect.value;
   const gender = document.getElementById("gender").value;
   const count = parseInt(document.getElementById("count").value)||1;
-  const names = category==="real" ? await generateRealNames(count, gender) : Array.from({length:count},()=>generateTerradineName(gender));
-  document.getElementById("name-output").innerHTML = names.join("<br>");
-}
-document.getElementById("generate-btn").addEventListener("click", generateNames);
+  let names = [];
 
-document.getElementById("ending-btn").addEventListener("click", ()=>{
-  const results = generateTerradineSuffixes(
-    document.getElementById("base-name").value.trim(),
-    document.querySelector('input[name="ending-gender"]:checked').value
-  );
-  document.getElementById("ending-output").innerHTML = results.join("<br>");
+  if(category === "real"){
+    names = await generateRealNames(count, gender);
+  } else if(category === "terradine"){
+    names = Array.from({length:count}, ()=>generateTerradineName(gender));
+  } else if(category === "custom"){
+    const base = baseInput.value.trim();
+    if(base) names = generateTerradineSuffixes(base, document.querySelector('input[name="ending-gender"]:checked').value);
+  }
+
+  output.innerHTML = names.join("<br>");
 });
 </script>
 
