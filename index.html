@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.13</title>
+<title>NameForge v0.15</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -28,7 +28,7 @@
     max-width: 500px;
     text-align: center;
   }
-  #name-output {
+  #name-output, #ending-output {
     margin-top: 15px;
     font-size: 20px;
     color: #ffb74d;
@@ -37,7 +37,7 @@
 </head>
 <body>
 
-<h1>NameForge v0.13</h1>
+<h1>NameForge v0.15</h1>
 
 <!-- EXISTING GENERATOR -->
 <div class="section">
@@ -64,13 +64,25 @@
 
 <!-- NEW: MANUAL BASE NAME + ENDINGS -->
 <div class="section">
-  <h3>Add Endings to a Name</h3>
+  <h3>Add Endings to Existing Name</h3>
 
   <input
     type="text"
     id="base-name"
-    placeholder="Enter base name (e.g. Dor, Thal, Eli)"
+    placeholder="Base name (e.g. Dor, Thal, Nim)"
   >
+
+  <div style="margin-top:10px;">
+    <label>
+      <input type="radio" name="ending-gender" value="male" checked>
+      Male endings
+    </label>
+    &nbsp;&nbsp;
+    <label>
+      <input type="radio" name="ending-gender" value="female">
+      Female endings
+    </label>
+  </div>
 
   <button id="ending-btn">Generate Variants</button>
 
@@ -79,51 +91,29 @@
 
 <script>
 // ---------- EXISTING FANTASY LOGIC (UNCHANGED) ----------
-
-// Simple, pronounceable syllables
 const onsets = ["d","t","k","n","m","l","r","s","th","v"];
 const vowels = ["a","e","i","o","u"];
 const codas = ["l","n","r","m","k","s","d","v"];
-
-// Allowed suffixes ONLY
 const suffixes = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function makeSyllable(allowCoda = true) {
   let s = pick(onsets) + pick(vowels);
-  if (allowCoda && Math.random() < 0.5) {
-    s += pick(codas);
-  }
+  if (allowCoda && Math.random() < 0.5) s += pick(codas);
   return s;
 }
 
 function generateFantasyMaleName() {
   let syllableCount = Math.random() < 0.7 ? 1 : 2;
   let base = "";
-
-  for (let i = 0; i < syllableCount; i++) {
-    base += makeSyllable(i === 0);
-  }
-
+  for (let i = 0; i < syllableCount; i++) base += makeSyllable(i === 0);
   let suffix = pick(suffixes);
-
   const lastBaseChar = base.slice(-1);
   const firstSuffixChar = suffix.replace("'", "").charAt(0);
-  if (lastBaseChar === firstSuffixChar) {
-    base = base.slice(0, -1);
-  }
-
+  if (lastBaseChar === firstSuffixChar) base = base.slice(0, -1);
   let name = base + suffix;
-
-  name = name
-    .replace(/[cC]/g, "")
-    .replace(/([aeiou])\1/g, "$1")
-    .replace(/el'l/g, "el")
-    .toLowerCase();
-
+  name = name.replace(/[cC]/g,"").replace(/([aeiou])\1/g,"$1").replace(/el'l/g,"el").toLowerCase();
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
@@ -133,7 +123,6 @@ async function generateNames() {
   const gender = document.getElementById("gender").value;
   const count = parseInt(document.getElementById("count").value) || 1;
   let names = [];
-
   try {
     if (category === "real") {
       let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us,gb,ca,au,nz`;
@@ -142,50 +131,47 @@ async function generateNames() {
       const data = await res.json();
       names = data.results.map(u => `${u.name.first} ${u.name.last}`);
     } else {
-      for (let i = 0; i < count; i++) {
-        names.push(generateFantasyMaleName());
-      }
+      for (let i=0;i<count;i++) names.push(generateFantasyMaleName());
     }
-  } catch (err) {
-    names = ["Error: " + err.message];
-  }
-
+  } catch(err) { names = ["Error: " + err.message]; }
   document.getElementById("name-output").innerHTML = names.join("<br>");
 }
+document.getElementById("generate-btn").addEventListener("click", generateNames);
 
-document.getElementById("generate-btn")
-  .addEventListener("click", generateNames);
+// ---------- FEMALE SUFFIXES (ADDITIVE) ----------
+const femaleSuffixes = ["'ra","ral","raka","'ka","ara","'sa","sha","'la","lin","'na","ae","yn"];
+const rareFemaleSuffix = "'ia"; // will attach to another suffix, 1 in 100 chance
 
-// ---------- NEW: BASE NAME + SUFFIX VARIANTS ----------
 function generateEndings() {
-  const baseInput = document.getElementById("base-name").value.trim();
-  if (!baseInput) return;
+  const input = document.getElementById("base-name").value.trim();
+  if (!input) return;
 
-  let base = baseInput
-    .replace(/[cC]/g, "")
-    .toLowerCase();
+  const gender = document.querySelector('input[name="ending-gender"]:checked').value;
+  let base = input.replace(/[cC]/g,"").toLowerCase();
 
-  const results = suffixes.map(suffix => {
+  let activeSuffixes = gender === "female" ? [...femaleSuffixes] : [...suffixes];
+  const results = [];
+
+  activeSuffixes.forEach(suffix => {
     let b = base;
     const last = b.slice(-1);
     const first = suffix.replace("'", "").charAt(0);
+    if (last === first) b = b.slice(0, -1);
 
-    if (last === first) {
-      b = b.slice(0, -1);
+    let name = (b + suffix).replace(/el'l/g,"el");
+
+    // Rare 'ia attaches after another female suffix
+    if (gender === "female" && Math.random() < 0.01) {
+      name += rareFemaleSuffix;
     }
 
-    let name = (b + suffix)
-      .replace(/el'l/g, "el");
-
-    return name.charAt(0).toUpperCase() + name.slice(1);
+    results.push(name.charAt(0).toUpperCase() + name.slice(1));
   });
 
-  document.getElementById("ending-output").innerHTML =
-    results.join("<br>");
+  document.getElementById("ending-output").innerHTML = results.join("<br>");
 }
 
-document.getElementById("ending-btn")
-  .addEventListener("click", generateEndings);
+document.getElementById("ending-btn").addEventListener("click", generateEndings);
 </script>
 
 </body>
