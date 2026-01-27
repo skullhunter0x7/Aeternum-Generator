@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.17</title>
+<title>NameForge v0.18</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -28,7 +28,7 @@
     max-width: 500px;
     text-align: center;
   }
-  #name-output, #ending-output {
+  #name-output, #ending-output, #attr-output {
     margin-top: 15px;
     font-size: 20px;
     color: #ffb74d;
@@ -37,13 +37,14 @@
 </head>
 <body>
 
-<h1>NameForge v0.17</h1>
+<h1>NameForge v0.18</h1>
 
+<!-- ---------------- Terradine Section ---------------- -->
 <div class="section">
   <label for="category">Select Type:</label>
   <select id="category">
     <option value="real">Real Name</option>
-    <option value="fantasy">Fantasy Name</option>
+    <option value="terradine">Terradine</option>
   </select>
 
   <label for="gender">Select Gender:</label>
@@ -56,33 +57,47 @@
   <input type="number" id="count" value="5" min="1" max="50">
 
   <button id="generate-btn">Generate Names</button>
-
   <div id="name-output"></div>
 </div>
 
+<!-- ---------------- Manual Base + Suffix Section ---------------- -->
 <div class="section">
   <h3>Add Endings to Existing Name</h3>
-
   <input type="text" id="base-name" placeholder="Base name (e.g. Dor, Thal, Nim)">
-
   <div style="margin-top:10px;">
     <label><input type="radio" name="ending-gender" value="male" checked> Male endings</label>
     &nbsp;&nbsp;
     <label><input type="radio" name="ending-gender" value="female"> Female endings</label>
   </div>
-
   <button id="ending-btn">Generate Variants</button>
   <div id="ending-output"></div>
 </div>
 
+<!-- ---------------- Aethere Section ---------------- -->
+<div class="section">
+  <h3>Aethere Name Generator</h3>
+  <label for="attr-count">Number of names:</label>
+  <input type="number" id="attr-count" value="5" min="1" max="50">
+
+  <label for="attr-gender">Optional gender suffix:</label>
+  <select id="attr-gender">
+    <option value="none">None</option>
+    <option value="male">Male</option>
+    <option value="female">Female</option>
+  </select>
+
+  <button id="attr-btn">Generate Aethere Names</button>
+  <div id="attr-output"></div>
+</div>
+
 <script>
-// ---------- SYLLABLE LOGIC ----------
+// ---------------- Terradine Logic ----------------
 const onsets = ["d","t","k","n","m","l","r","s","th","v"];
 const vowels = ["a","e","i","o","u"];
 const codas = ["l","n","r","m","k","s","d","v"];
 const maleSuffixes = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
 const femaleSuffixes = ["'ra","ral","raka","'ka","ara","'sa","sha","'la","lin","'na","ae","yn"];
-const rareFemaleSuffixes = ["'ra'ia","'ka'ia","'sa'ia","'la'ia","'na'ia"]; // rare combos, 1%
+const rareFemaleSuffixes = ["'ra'ia","'ka'ia","'sa'ia","'la'ia","'na'ia"];
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
@@ -92,21 +107,20 @@ function makeSyllable(allowCoda = true){
   return s;
 }
 
-// ---------- FANTASY NAME GENERATOR ----------
-function generateFantasyName(gender){
+function generateTerradineName(gender){
   let syllableCount = Math.random()<0.7 ? 1 : 2;
   let base = "";
   for(let i=0;i<syllableCount;i++) base += makeSyllable(i===0);
 
-  let activeSuffixes = gender==="female" ? [...femaleSuffixes] : [...maleSuffixes];
+  let activeSuffixes = gender==="female"? [...femaleSuffixes] : [...maleSuffixes];
   let suffix = pick(activeSuffixes);
 
-  // 1% chance to use rare female suffix combos
+  // 1% chance for rare female combos
   if(gender==="female" && Math.random()<0.01){
     suffix = pick(rareFemaleSuffixes);
   }
 
-  // prevent letter collision
+  // prevent collision
   const lastBaseChar = base.slice(-1);
   const firstSuffixChar = suffix.replace(/'/g,"").charAt(0);
   if(lastBaseChar === firstSuffixChar) base = base.slice(0,-1);
@@ -116,11 +130,9 @@ function generateFantasyName(gender){
              .replace(/([aeiou])\1/g,"$1")
              .replace(/el'l/g,"el")
              .toLowerCase();
-
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// ---------- MAIN GENERATOR ----------
 async function generateNames(){
   const category = document.getElementById("category").value;
   const gender = document.getElementById("gender").value;
@@ -135,7 +147,7 @@ async function generateNames(){
       const data = await res.json();
       names = data.results.map(u=>`${u.name.first} ${u.name.last}`);
     } else {
-      for(let i=0;i<count;i++) names.push(generateFantasyName(gender));
+      for(let i=0;i<count;i++) names.push(generateTerradineName(gender));
     }
   }catch(err){
     names = ["Error: "+err.message];
@@ -146,28 +158,26 @@ async function generateNames(){
 
 document.getElementById("generate-btn").addEventListener("click", generateNames);
 
-// ---------- MANUAL BASE NAME + ENDINGS ----------
+// ---------------- Manual Base + Suffix ----------------
 function generateEndings(){
   const input = document.getElementById("base-name").value.trim();
   if(!input) return;
 
   const gender = document.querySelector('input[name="ending-gender"]:checked').value;
   let base = input.replace(/[cC]/g,"").toLowerCase();
+  let activeSuffixes = gender==="female"? [...femaleSuffixes] : [...maleSuffixes];
 
-  let activeSuffixes = gender==="female" ? [...femaleSuffixes] : [...maleSuffixes];
-  let results = [];
-
-  // add rare female suffixes with 1% chance
+  // add rare female combos 1%
   if(gender==="female" && Math.random()<0.01){
     activeSuffixes = activeSuffixes.concat(rareFemaleSuffixes);
   }
 
+  let results = [];
   activeSuffixes.forEach(suffix=>{
     let b = base;
     const last = b.slice(-1);
     const first = suffix.replace(/'/g,"").charAt(0);
     if(last===first) b = b.slice(0,-1);
-
     let name = (b+suffix).replace(/el'l/g,"el");
     results.push(name.charAt(0).toUpperCase()+name.slice(1));
   });
@@ -176,6 +186,33 @@ function generateEndings(){
 }
 
 document.getElementById("ending-btn").addEventListener("click", generateEndings);
+
+// ---------------- Aethere Logic ----------------
+const attrPrefixes = ["Light","Dark","Storm","Wind","Fire","Shadow","Moon","Sun","Iron","Star","Night"];
+const attrObjects = ["Feather","Blade","Leaf","Rider","Song","Stone","Heart","Wing","Breeze","Fang","Eye"];
+
+function generateAethereName(gender){
+  let base = pick(attrPrefixes) + pick(attrObjects);
+  let b = base.toLowerCase();
+
+  if(gender==="male"){
+    b += pick(maleSuffixes);
+  } else if(gender==="female"){
+    let activeSuffixes = [...femaleSuffixes];
+    if(Math.random()<0.01) activeSuffixes = activeSuffixes.concat(rareFemaleSuffixes);
+    b += pick(activeSuffixes);
+  }
+
+  return b.charAt(0).toUpperCase() + b.slice(1);
+}
+
+document.getElementById("attr-btn").addEventListener("click", ()=>{
+  const count = parseInt(document.getElementById("attr-count").value)||1;
+  const gender = document.getElementById("attr-gender").value;
+  const names = [];
+  for(let i=0;i<count;i++) names.push(generateAethereName(gender));
+  document.getElementById("attr-output").innerHTML = names.join("<br>");
+});
 </script>
 
 </body>
