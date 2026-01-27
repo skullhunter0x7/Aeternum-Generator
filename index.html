@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForgeV0.7</title>
+<title>NameForgeV0.8</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<h1>NameForgeV0.7</h1>
+<h1>NameForgeV0.8</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
@@ -46,38 +46,47 @@
 <script>
 // ----- Fantasy male generator setup -----
 const fantasyPrefixes = ["Ar","Thal","Ka","Dor","Syl","El","Nim"];
-const fantasySuffixesMale = ["'r","'k","'s","'l","'n","Ron","ar","rik","vek","ald","rak","isk","lan'r"];
-const vowels = ["a","e","i","o","u","ae","io"];
+const fantasySuffixesMale = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
+const consonants = ["b","d","f","g","h","j","k","l","m","n","p","r","s","t","v"];
+const vowels = ["a","e","i","o","u"];
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function generateFantasyMaleName(){
+  // Step 1: Pick prefix
   let prefix = pick(fantasyPrefixes);
-  let suffixRaw = pick(fantasySuffixesMale);
 
-  // Handle suffix capitalization
-  const singleLetterSuffixes = ["r","k","s","l","n"];
-  let suffix = suffixRaw;
-
-  if(singleLetterSuffixes.includes(suffixRaw.replace("'","").toLowerCase())){
-    // Single-letter suffix: lowercase with apostrophe
-    suffix = "'" + suffixRaw.replace("'","").toLowerCase();
-  } else if(suffixRaw.length > 1){
-    // Multi-letter suffix: lowercase first letter to avoid mid-name caps
-    suffix = suffixRaw.charAt(0).toLowerCase() + suffixRaw.slice(1);
+  // Step 2: Decide middle syllable (1 consonant + vowel)
+  let mid = "";
+  if(Math.random() < 0.7){ // 70% chance to add a middle
+    const c = pick(consonants);
+    const v = pick(vowels);
+    mid = c + v;
   }
 
-  // Add vowel middle if needed
-  const lastChar = prefix.slice(-1).toLowerCase();
-  const firstCharSuffix = suffix.replace("'","").charAt(0).toLowerCase();
-  let mid = "";
-  if(lastChar === firstCharSuffix || (prefix+suffix).length < 6 || Math.random() < 0.6){
-    mid = pick(vowels);
+  // Step 3: Pick suffix
+  let suffixRaw = pick(fantasySuffixesMale);
+  let suffix = suffixRaw;
+
+  const singleLetterSuffixes = ["r","k","s","l","n"];
+  if(singleLetterSuffixes.includes(suffixRaw.replace("'","").toLowerCase())){
+    suffix = "'" + suffixRaw.replace("'","").toLowerCase(); // lowercase apostrophe
+  } else if(suffixRaw.length > 1){
+    suffix = suffixRaw.charAt(0).toLowerCase() + suffixRaw.slice(1); // lowercase first letter
+  }
+
+  // Step 4: Avoid awkward double letters before glottal stop
+  if(mid){
+    const lastChar = mid.slice(-1).toLowerCase();
+    const firstCharSuffix = suffix.replace("'","").charAt(0).toLowerCase();
+    if(lastChar === firstCharSuffix){
+      mid = mid.slice(0,-1) + pick(vowels); // replace last vowel
+    }
   }
 
   let name = prefix + mid + suffix;
 
-  // Remove forbidden letters C and Z
+  // Step 5: Remove forbidden letters
   name = name.replace(/[cCzZ]/g,"");
 
   // Capitalize first letter
@@ -95,7 +104,6 @@ async function generateNames() {
 
   try {
     if(category === "real") {
-      // Western real names
       let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us,gb,ca,au,nz`;
       if(gender !== "all") apiURL += `&gender=${gender}`;
       const res = await fetch(apiURL);
