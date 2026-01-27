@@ -11,9 +11,9 @@ const aethPrefixes = [
 
 // 25 object/endings
 const aethObjects = [
-  "Feather","Blade","Leaf","Rider","Song","Stone","Heart","Wing","Breeze","Fang",
-  "Eye","Tide","Shard","Strike","Flame","Root","Bloom","Spark","Whisper","Shadow",
-  "Crest","Glimmer","Haven","Drift","Light"
+  "feather","blade","leaf","rider","song","stone","heart","wing","breeze","fang",
+  "eye","tide","shard","strike","flame","root","bloom","spark","whisper","shadow",
+  "crest","glimmer","haven","drift","light"
 ];
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
