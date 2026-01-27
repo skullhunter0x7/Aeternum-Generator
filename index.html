@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForgeV4</title>
+<title>NameForgeV5</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<h1>NameForgeV4</h1>
+<h1>NameForgeV5</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
@@ -46,24 +46,29 @@
 <script>
 // ----- Fantasy male generator setup -----
 const fantasyPrefixes = ["Ar","Thal","Ka","Dor","Syl","El","Nim"];
-const fantasySuffixesMale = ["'R","'k","'s","'l","'n","Ron","ar","rik","vek","ald","rak","isk","lan'r"];
+const fantasySuffixesMale = ["'r","'k","'s","'l","'n","Ron","ar","rik","vek","ald","rak","isk","lan'r"];
 const vowels = ["a","e","i","o","u","ae","io"];
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function generateFantasyMaleName(){
-  const prefix = pick(fantasyPrefixes);
-  const suffixRaw = pick(fantasySuffixesMale);
+  let prefix = pick(fantasyPrefixes);
+  let suffixRaw = pick(fantasySuffixesMale);
 
-  // Only single-letter suffixes get apostrophe
+  // Only single-letter suffixes get apostrophe and lowercase
   const singleLetterSuffixes = ["r","k","s","l","n"];
   let suffix = suffixRaw;
   if(singleLetterSuffixes.includes(suffixRaw.replace("'",""))){
-    suffix = "'" + suffixRaw.replace("'","");
+    suffix = "'" + suffixRaw.replace("'","").toLowerCase();
   }
 
-  // Optional vowel middle for smoother flow
-  const mid = Math.random() < 0.6 ? pick(vowels) : "";
+  // Avoid repetitive sounds by adding vowel if needed
+  const lastCharPrefix = prefix.slice(-1).toLowerCase();
+  const firstCharSuffix = suffix.replace("'","").charAt(0).toLowerCase();
+  let mid = "";
+  if (lastCharPrefix === firstCharSuffix || (prefix+suffix).length < 6 || Math.random() < 0.6){
+    mid = pick(vowels);
+  }
 
   let name = prefix + mid + suffix;
 
