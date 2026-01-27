@@ -6,27 +6,49 @@ const hairColorsByPlanet = {
   "Oran": ["Blonde", "Red", "Brown"]
 };
 
-// Random names if user leaves it blank
+// Example random names
 const randomNames = ["Arin", "Lyra", "Doran", "Thalina", "Kael", "Nim", "Soren", "Lira", "Tarin", "Elda"];
 const genders = ["Male", "Female"];
 const planets = ["Vireth", "Terradine", "Aethere", "Oran"];
 
+// DOM elements
+const nameInput = document.getElementById("char-name");
+const genderSelect = document.getElementById("char-gender");
+const ageInput = document.getElementById("char-age");
+const planetSelect = document.getElementById("char-planet");
+const hairSelect = document.getElementById("char-hair");
+const outputDiv = document.getElementById("character-output");
+
+// Populate hair color dropdown based on planet
+function updateHairOptions() {
+  const planet = planetSelect.value;
+  hairSelect.innerHTML = '<option value="">Random</option>';
+  hairColorsByPlanet[planet].forEach(color => {
+    const option = document.createElement("option");
+    option.value = color;
+    option.textContent = color;
+    hairSelect.appendChild(option);
+  });
+}
+
+// Call once on page load
+updateHairOptions();
+
+// Update hair colors when planet changes
+planetSelect.addEventListener("change", updateHairOptions);
+
+// Pick random item from array
 function randomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 // Generate character based on current inputs
 function generateCharacter() {
-  let name = document.getElementById("char-name").value.trim();
-  const gender = document.getElementById("char-gender").value;
-  const age = document.getElementById("char-age").value;
-  const planet = document.getElementById("char-planet").value;
-
-  if(!name) {
-    name = randomItem(randomNames);
-  }
-
-  const hair = randomItem(hairColorsByPlanet[planet]);
+  let name = nameInput.value.trim() || randomItem(randomNames);
+  const gender = genderSelect.value;
+  const age = ageInput.value;
+  const planet = planetSelect.value;
+  const hair = hairSelect.value || randomItem(hairColorsByPlanet[planet]);
 
   const output = 
 `Name: ${name}
@@ -35,22 +57,24 @@ Age: ${age}
 Planet: ${planet}
 Hair Color: ${hair}`;
 
-  document.getElementById("character-output").textContent = output;
+  outputDiv.textContent = output;
 }
 
 // Generate fully random character
 function randomizeAll() {
   const name = randomItem(randomNames);
   const gender = randomItem(genders);
-  const age = Math.floor(Math.random() * 1000) + 1; // Age between 1-1000
+  const age = Math.floor(Math.random() * 1000) + 1;
   const planet = randomItem(planets);
   const hair = randomItem(hairColorsByPlanet[planet]);
 
-  // Update input fields with random values
-  document.getElementById("char-name").value = name;
-  document.getElementById("char-gender").value = gender;
-  document.getElementById("char-age").value = age;
-  document.getElementById("char-planet").value = planet;
+  // Update input fields
+  nameInput.value = name;
+  genderSelect.value = gender;
+  ageInput.value = age;
+  planetSelect.value = planet;
+  updateHairOptions();
+  hairSelect.value = hair;
 
   const output = 
 `Name: ${name}
@@ -59,8 +83,12 @@ Age: ${age}
 Planet: ${planet}
 Hair Color: ${hair}`;
 
-  document.getElementById("character-output").textContent = output;
+  outputDiv.textContent = output;
 }
+
+// Event listeners
+document.getElementById("generate-btn").addEventListener("click", generateCharacter);
+document.getElementById("random-btn").addEventListener("click", randomizeAll);
 
 document.getElementById("generate-btn").addEventListener("click", generateCharacter);
 document.getElementById("random-btn").addEventListener("click", randomizeAll);
