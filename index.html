@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForgeV0.9</title>
+<title>NameForge v0.12</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -15,13 +15,22 @@
     padding: 20px;
   }
   h1 { color: #4ce1ff; }
-  select, input, button { padding: 10px; margin: 5px; font-size: 16px; }
-  #name-output { margin-top: 20px; font-size: 20px; color: #ffb74d; text-align: center; }
+  select, input, button {
+    padding: 10px;
+    margin: 5px;
+    font-size: 16px;
+  }
+  #name-output {
+    margin-top: 20px;
+    font-size: 20px;
+    color: #ffb74d;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
 
-<h1>NameForgeV0.9</h1>
+<h1>NameForge v0.12</h1>
 
 <label for="category">Select Type:</label>
 <select id="category">
@@ -44,54 +53,62 @@
 <div id="name-output">Names will appear here</div>
 
 <script>
-// ----- Human-sounding fantasy male generator -----
-const syllables = ["ar","el","dor","thal","ka","nim","ron","rik","vek","ald","rak","isk","lan","sy"];
-const glottalSuffixes = ["'r","'k","'s","'l","'n"];
-const multiSuffixes = ["ron","ar","rik","vek","ald","rak","isk","lan"];
-const forbiddenLetters = /[cCzZ]/g;
+// ---------- Fantasy rules (human flow) ----------
 
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+// Simple, pronounceable syllables
+const onsets = ["d","t","k","n","m","l","r","s","th","v"];
+const vowels = ["a","e","i","o","u"];
+const codas = ["l","n","r","m","k","s","d","v"];
 
-function generateFantasyMaleName(){
-  let name = pick(syllables).charAt(0).toUpperCase() + pick(syllables).slice(1);
-  let syllableCount = Math.random() < 0.7 ? 2 : 3; // 2-3 syllables
+// Allowed suffixes ONLY
+const suffixes = ["'r","'k","'s","'l","'n","ron","ar","rik","vek","ald","rak","isk","lan'r"];
 
-  for(let i=1; i<syllableCount; i++){
-    let next = pick(syllables);
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-    // Avoid repeating sounds
-    while(next.charAt(0).toLowerCase() === name.slice(-1).toLowerCase()){
-      next = pick(syllables);
-    }
+function makeSyllable(allowCoda = true) {
+  let s = pick(onsets) + pick(vowels);
+  if (allowCoda && Math.random() < 0.5) {
+    s += pick(codas);
+  }
+  return s;
+}
 
-    name += next;
+function generateFantasyMaleName() {
+  // 1–2 syllables max before suffix
+  let syllableCount = Math.random() < 0.7 ? 1 : 2;
+  let base = "";
+
+  for (let i = 0; i < syllableCount; i++) {
+    base += makeSyllable(i === 0);
   }
 
-  // Decide on suffix type
-  let useGlottal = Math.random() < 0.5; // 50% chance
-  if(useGlottal){
-    let suffix = pick(glottalSuffixes);
-    // only attach glottal if previous letter is not vowel for natural pause
-    if(!"aeiou".includes(name.slice(-1).toLowerCase())){
-      name += suffix;
-    } else {
-      // fallback: pick multi-letter suffix
-      name += pick(multiSuffixes);
-    }
-  } else {
-    name += pick(multiSuffixes);
+  let suffix = pick(suffixes);
+
+  // Prevent same-letter collision before suffix
+  const lastBaseChar = base.slice(-1);
+  const firstSuffixChar = suffix.replace("'", "").charAt(0);
+  if (lastBaseChar === firstSuffixChar) {
+    base = base.slice(0, -1);
   }
 
-  // Remove forbidden letters
-  name = name.replace(forbiddenLetters,"");
+  let name = base + suffix;
 
-  // Capitalize first letter
+  // Final cleanup rules
+  name = name
+    .replace(/[cC]/g, "")     // no C
+    .replace(/([aeiou])\1/g, "$1") // no double vowels
+    .replace(/el'l/g, "el")   // hard ban
+    .toLowerCase();
+
+  // Capitalize first letter only
   name = name.charAt(0).toUpperCase() + name.slice(1);
 
   return name;
 }
 
-// ----- Main generator function -----
+// ---------- Main generator ----------
 async function generateNames() {
   const category = document.getElementById("category").value;
   const gender = document.getElementById("gender").value;
@@ -99,25 +116,26 @@ async function generateNames() {
   let names = [];
 
   try {
-    if(category === "real") {
+    if (category === "real") {
       let apiURL = `https://randomuser.me/api/?results=${count}&inc=name&nat=us,gb,ca,au,nz`;
-      if(gender !== "all") apiURL += `&gender=${gender}`;
+      if (gender !== "all") apiURL += `&gender=${gender}`;
       const res = await fetch(apiURL);
       const data = await res.json();
       names = data.results.map(u => `${u.name.first} ${u.name.last}`);
-    } else if(category === "fantasy") {
-      for(let i=0;i<count;i++){
+    } else {
+      for (let i = 0; i < count; i++) {
         names.push(generateFantasyMaleName());
       }
     }
-  } catch(err) {
+  } catch (err) {
     names = ["Error: " + err.message];
   }
 
   document.getElementById("name-output").innerHTML = names.join("<br>");
 }
 
-document.getElementById("generate-btn").addEventListener("click", generateNames);
+document.getElementById("generate-btn")
+  .addEventListener("click", generateNames);
 </script>
 
 </body>
