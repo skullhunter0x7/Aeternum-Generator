@@ -1,57 +1,37 @@
-// ---------- Affix sets ----------
-const affixes = {
-  prefixes: [
-    "Ael", "Syl", "Thar", "Lira", "Fael", "Ery", "Or", "Mar",
-    "Brak", "Ul", "Khar", "Mor", "Thrak", "Vash", "Gor",
-    "Var", "Zyr", "Mal", "Drex", "Rav", "Kael",
-    "Xy", "Qir", "Za", "Ul", "Tek", "Ith", "Zy",
-    "Kael", "Thos", "Om", "Amon", "Yss", "Rael"
-  ],
-  roots: [
-    "mir", "lys", "ryn", "dor", "vin", "morth", "gar", "drax", "zor",
-    "th", "ora", "iel", "syl", "rix", "qir", "ul", "ae", "thos", "amon",
-    "nys", "ra", "el", "ka", "mir", "vash"
-  ],
-  suffixes: [
-    "iel", "wyn", "thiel", "ra", "nys",
-    "an", "or", "en", "ar",
-    "ok", "rak", "gorn", "ash", "thor",
-    "th", "vash", "zeth", "yx",
-    "qir", "ul", "xae", "ith", "sh",
-    "thos", "amon", "yrr", "ar", "iel"
-  ]
+// affixnames.js
+const syllables = {
+  start: ["Al", "Ka", "Thar", "Eri", "Syl", "Lir", "Fa", "Mar", "Bran", "Ul", "Mor", "Va", "Zy", "Ra", "Om"],
+  middle: ["rin", "dor", "mir", "lyn", "vin", "gar", "dra", "thil", "ora", "iel", "syl", "rix", "qir", "ul", "ae", "thon", "amon"],
+  end: ["el", "ar", "ia", "wyn", "nys", "ok", "ash", "thor", "th", "yx", "ul", "sh", "yrr"]
 };
 
-// ---------- Helper ----------
-function randomChoice(array) {
-  return array[Math.floor(Math.random() * array.length)];
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// ---------- Generate a single affix name ----------
-function generateAffixName() {
-  const prefix = randomChoice(affixes.prefixes);
-  const root = randomChoice(affixes.roots);
-  const suffix = randomChoice(affixes.suffixes);
+// Combine syllables, remove duplicate letters at junctions
+function generateSyllableName() {
+  let start = randomChoice(syllables.start);
+  let middle = randomChoice(syllables.middle);
+  let end = randomChoice(syllables.end);
 
-  // Combine and capitalize first letter
-  const name = prefix + root + suffix;
+  // Clean overlapping letters
+  if(start.slice(-1).toLowerCase() === middle.slice(0,1).toLowerCase()) middle = middle.slice(1);
+  if(middle.slice(-1).toLowerCase() === end.slice(0,1).toLowerCase()) end = end.slice(1);
+
+  const name = start + middle + end;
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// ---------- Generate multiple names ----------
-function generateAffixNames(count = 5) {
+// Generate multiple names
+function generateSyllableNames(count = 5) {
   const names = [];
-  for (let i = 0; i < count; i++) {
-    names.push(generateAffixName());
-  }
+  for(let i = 0; i < count; i++) names.push(generateSyllableName());
   return names;
 }
 
-// ---------- HTML Integration ----------
-document.getElementById("affix-generate-btn")?.addEventListener("click", () => {
-  const countInput = document.getElementById("affix-count");
-  const output = document.getElementById("affix-output");
-  const count = parseInt(countInput.value) || 5;
-  const names = generateAffixNames(count);
-  if(output) output.innerHTML = names.join("<br>");
-});
+// Hook into HTML
+window.generateAffixNames = function(elementId = "affix-output", count = 5) {
+  const output = document.getElementById(elementId);
+  if(output) output.innerHTML = generateSyllableNames(count).join("<br>");
+};
