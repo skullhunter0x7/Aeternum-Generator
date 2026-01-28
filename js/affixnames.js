@@ -29,24 +29,12 @@ function randomChoice(array) {
 
 // ---------- Generate a single affix name ----------
 function generateAffixName() {
-  let name = "";
+  const prefix = randomChoice(affixes.prefixes);
+  const root = randomChoice(affixes.roots);
+  const suffix = randomChoice(affixes.suffixes);
 
-  // Random 1–2 prefixes
-  const numPrefixes = Math.random() < 0.7 ? 1 : 2;
-  for (let i = 0; i < numPrefixes; i++) {
-    name += randomChoice(affixes.prefixes);
-  }
-
-  // One root
-  name += randomChoice(affixes.roots);
-
-  // Random 1–2 suffixes
-  const numSuffixes = Math.random() < 0.8 ? 1 : 2;
-  for (let i = 0; i < numSuffixes; i++) {
-    name += randomChoice(affixes.suffixes);
-  }
-
-  // Capitalize first letter
+  // Combine and capitalize first letter
+  const name = prefix + root + suffix;
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
