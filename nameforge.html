@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NameForge v0.30</title>
+<title>NameForge v0.29</title>
 
 <!-- Favicon -->
-<link rel="icon" href="assets/favicon.png" type="image/png">
+<link rel="icon" href="assets/favicon.png" type="image/x-icon">
 
 <style>
   body {
@@ -28,21 +28,16 @@
     max-width: 500px;
     text-align: center;
   }
-  #name-output, #ending-output, #affix-output {
-    margin-top: 15px;
-    font-size: 20px;
-    color: #ffb74d;
-  }
+  #name-output, #ending-output { margin-top: 15px; font-size: 20px; color: #ffb74d; }
   #manual-section { display: none; }
 </style>
 </head>
 <body>
 
-<h1>NameForge v0.30</h1>
+<h1>NameForge v0.29</h1>
 
 <!-- ---------------- Main Name Section ---------------- -->
 <div class="section">
-  <h3>Main Name Generator</h3>
   <label for="category">Select Type:</label>
   <select id="category">
     <option value="real">Real Name</option>
@@ -77,22 +72,10 @@
   </div>
 </div>
 
-<!-- ---------------- Affix Names Section ---------------- -->
-<div class="section">
-  <h3>Affix Names Generator</h3>
-  <label for="affix-count">Number of names:</label>
-  <input type="number" id="affix-count" value="5" min="1" max="50">
-  <button id="affix-generate-btn">Generate Names</button>
-  <div id="affix-output"></div>
-</div>
-
-<a href="index.html">← Back to Hub</a>
-
 <!-- ---------------- Scripts ---------------- -->
 <script src="js/terradine.js"></script>
 <script src="js/aethere.js"></script>
 <script src="js/orannames.js"></script>
-<script src="js/affixnames.js"></script>
 
 <script>
 // ---------- Show/hide manual section ----------
@@ -162,6 +145,8 @@ function generateEndings() {
 
 document.getElementById("ending-btn").addEventListener("click", generateEndings);
 </script>
+
+<a href="index.html">← Back to Hub</a>
 
 </body>
 </html>
